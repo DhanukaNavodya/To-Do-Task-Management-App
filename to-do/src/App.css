@@ -1,0 +1,104 @@
+/* General Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* App Container */
+.App {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 20px;
+  height: 100vh;
+  font-family: Arial, sans-serif;
+  background-color: #f5f5f5;
+}
+
+/* Heading */
+.App h1 {
+  font-size: 24px;
+  color: #333;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Route-specific Styling */
+.AddTask, .ToDoList {
+  width: 100%;
+  max-width: 400px;  /* Limiting the width for better mobile design */
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+/* Input and Button Styling */
+input[type="text"], button {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+}
+
+button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+/* To-Do List Styling */
+ul {
+  list-style-type: none;
+}
+
+li {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #ddd;
+}
+
+li button {
+  background-color: #dc3545;
+  padding: 5px 10px;
+  border: none;
+  color: white;
+  font-size: 14px;
+}
+
+li button:hover {
+  background-color: #c82333;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 600px) {
+  .App {
+    padding: 10px;
+  }
+
+  .App h1 {
+    font-size: 20px;
+  }
+
+  .AddTask, .ToDoList {
+    width: 100%;
+    max-width: 100%;
+    padding: 15px;
+  }
+
+  input[type="text"], button {
+    font-size: 14px;
+    padding: 8px;
+  }
+}
