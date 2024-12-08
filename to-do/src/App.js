@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'; // Import React Router
-
+import SignUp from './components/signup'
+import Login from './components/login'
 import AddTask from './components/AddTask'; // Import AddTask component
 import ToDoList from './components/ToDoList'; // Import ToDoList component
 
@@ -24,11 +25,16 @@ function App() {
           {/* Define the route for To-Do List page */}
           <Route
             path="/"
-            element={<ToDoList/>}
+            element={<Login/>}
           /> 
 
-          {/* Default route (home page)
-          <Route path="/" element={<ToDoList toDoList={toDoList} setToDoList={setToDoList} />} /> */}
+          <Route
+            path="/signup"
+            element={<SignUp/>}
+          /> 
+          
+          
+          <Route path="/home" element={<ToDoList />} />
         </Routes>
       </div>
     </Router>

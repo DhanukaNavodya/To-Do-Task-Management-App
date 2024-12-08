@@ -1,58 +1,89 @@
 import React, { useState, useEffect } from 'react';
-import { db, collection, addDoc, getDocs, deleteDoc, doc } from '../firebase'; // Import Firestore functions
-import { FaTrashAlt } from 'react-icons/fa'; // Import Trash Bin Icon
-import Swal from 'sweetalert2'; // Import SweetAlert for better validation and user feedback
+import { db, collection, addDoc, getDocs, deleteDoc, doc } from '../firebase';
+import { FaTrashAlt } from 'react-icons/fa';
+import Swal from 'sweetalert2';
+import { getAuth } from 'firebase/auth';
 
-function ToDO() {
+function ToDo() {
   const [task, setTask] = useState('');
-  const [description, setDescription] = useState(''); // State for task description
-  const [priority, setPriority] = useState('low');   // State for task priority
+  const [description, setDescription] = useState('');
+  const [priority, setPriority] = useState('low');
   const [toDoList, setToDoList] = useState([]);
+  const [user, setUser] = useState(null);
 
-  // Load the to-do list from Firestore when the app loads
+  const auth = getAuth();
+
+  // Fetch user on mount
+  useEffect(() => {
+    const fetchUser = () => {
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        setUser(currentUser);
+        console.log('Logged-in user:', currentUser.email);
+      } else {
+        console.log('No user is logged in');
+      }
+    };
+    fetchUser();
+
+    // Optionally, set user from localStorage if stored
+    const loggedInUser = JSON.parse(localStorage.getItem('loggedInUser'));
+    if (loggedInUser) {
+      setUser(loggedInUser);
+    }
+  }, [auth]);
+
+  // Fetch tasks only once when the component loads
   useEffect(() => {
     const fetchToDoList = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, 'todos'));
         const todos = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-        setToDoList(todos);
+
+        // Filter tasks based on logged-in user's email
+        if (user?.email) {
+          const userTasks = todos.filter((todo) => todo.createdBy === user.email);
+          setToDoList(userTasks);
+        }
       } catch (error) {
         console.error('Error fetching tasks:', error);
       }
     };
-    fetchToDoList();
-  }, []);
 
-  // Add a new to-do to Firestore
-  const addToDo = async () => {
-    if (!task.trim()) {
-      Swal.fire('Empty Field Detected  ', 'Task name cannot be empty.', 'warning');
-      return;
+    if (user?.email) {
+      fetchToDoList();
     }
-    if (!description.trim()) {
-      Swal.fire('Empty Field Detected', 'Task description cannot be empty.', 'warning');
+  }, [user]);
+
+  const addToDo = async () => {
+    if (!task.trim() || !description.trim()) {
+      Swal.fire('Error', 'Task name and description are required.', 'warning');
       return;
     }
 
     try {
-      // Add task, description, and priority to Firestore
-      const docRef = await addDoc(collection(db, 'todos'), {
+      const newTask = {
         task: task.trim(),
         description: description.trim(),
-        priority: priority
-      });
-      setToDoList([...toDoList, { id: docRef.id, task, description, priority }]);
+        priority,
+        createdBy: user?.email || 'Anonymous',
+        createdAt: new Date(),
+      };
+
+      const docRef = await addDoc(collection(db, 'todos'), newTask);
+
+      // Optimistic UI update
+      setToDoList([...toDoList, { id: docRef.id, ...newTask }]);
       setTask('');
       setDescription('');
       setPriority('low');
       Swal.fire('Success', 'Task added successfully!', 'success');
     } catch (error) {
-      console.error('Error adding document:', error);
+      console.error('Error adding task:', error);
       Swal.fire('Error', 'Failed to add task. Please try again.', 'error');
     }
   };
 
-  // Delete a to-do from Firestore
   const deleteToDo = async (index) => {
     const todoToDelete = toDoList[index];
 
@@ -63,18 +94,15 @@ function ToDO() {
       showCancelButton: true,
       confirmButtonColor: '#3085d6',
       cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, delete it!'
+      confirmButtonText: 'Yes, delete it!',
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          // Delete the document using deleteDoc
           const docRef = doc(db, 'todos', todoToDelete.id);
           await deleteDoc(docRef);
 
-          // Update the local state after deleting
-          const updatedList = toDoList.filter((_, i) => i !== index);
-          setToDoList(updatedList);
-
+          // Optimistic UI update
+          setToDoList(toDoList.filter((_, i) => i !== index));
           Swal.fire('Deleted!', 'Your task has been deleted.', 'success');
         } catch (error) {
           console.error('Error deleting document:', error);
@@ -88,9 +116,13 @@ function ToDO() {
     <div className="App max-w-2xl mx-auto p-6">
       <h1 className="text-center text-3xl text-green-500 mb-6">To-Do List</h1>
 
-      {/* Task Input Section */}
+      {user && (
+        <div className="user-details mb-6 text-center">
+          <p><strong>Email:</strong> {user.email}</p>
+        </div>
+      )}
+
       <div className="AddTask mb-6">
-        {/* Input for task name */}
         <input
           type="text"
           value={task}
@@ -98,8 +130,6 @@ function ToDO() {
           placeholder="Add a new task"
           className="w-full p-3 mb-3 border border-gray-300 rounded-md"
         />
-
-        {/* Dropdown for task priority */}
         <select
           value={priority}
           onChange={(e) => setPriority(e.target.value)}
@@ -109,16 +139,12 @@ function ToDO() {
           <option value="medium">Medium</option>
           <option value="high">High</option>
         </select>
-
-        {/* Textarea for task description */}
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Task Description"
           className="w-full p-3 h-24 mb-3 border border-gray-300 rounded-md"
         />
-
-        {/* Button to add task */}
         <button
           onClick={addToDo}
           className="w-full p-3 bg-green-500 text-white rounded-md cursor-pointer"
@@ -127,9 +153,7 @@ function ToDO() {
         </button>
       </div>
 
-      {/* Task List Section */}
       <div className="ToDoList">
-        {/* Render list of to-dos */}
         <ul className="list-none p-0">
           {toDoList.map((todo, index) => (
             <li
@@ -141,11 +165,11 @@ function ToDO() {
                   <strong>Task:</strong> {todo.task}
                 </p>
                 <p
-                  className={`
-                    ${todo.priority === 'high' ? 'text-red-500' : ''} 
-                    ${todo.priority === 'medium' ? 'text-yellow-500' : ''} 
-                    ${todo.priority === 'low' ? 'text-green-500' : ''}
-                  `}
+                  className={`${
+                    todo.priority === 'high' ? 'text-red-500' : ''
+                  } ${todo.priority === 'medium' ? 'text-yellow-500' : ''} ${
+                    todo.priority === 'low' ? 'text-green-500' : ''
+                  }`}
                 >
                   <strong>Priority:</strong> {todo.priority}
                 </p>
@@ -154,11 +178,9 @@ function ToDO() {
                   {todo.description}
                 </p>
               </div>
-
-              {/* Trash bin icon for delete */}
               <button
                 onClick={() => deleteToDo(index)}
-                className="bg-transparent border-none text-red-500 text-2xl cursor-pointer w-10 mb-20"
+                className="bg-transparent border-none text-red-500 text-2xl cursor-pointer"
               >
                 <FaTrashAlt />
               </button>
@@ -170,4 +192,4 @@ function ToDO() {
   );
 }
 
-export default ToDO;
+export default ToDo;
