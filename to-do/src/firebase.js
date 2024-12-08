@@ -1,6 +1,6 @@
 // firebase.js
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc ,updateDoc } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCZrY0W_lszNwy25VTjzgAItwRoixG-fAY",
@@ -17,4 +17,4 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 // Get Firestore instance
-export { db, collection, addDoc, getDocs, deleteDoc, doc };
+export { db, collection, addDoc, getDocs, deleteDoc, doc,updateDoc };

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { db, collection, addDoc, getDocs,deleteDoc,doc } from '../firebase'; // Import Firestore functions
+import { db, collection, addDoc, getDocs, deleteDoc, doc } from '../firebase'; // Import Firestore functions
 import { FaTrashAlt } from 'react-icons/fa'; // Import Trash Bin Icon
 
 function ToDO() {
@@ -64,7 +64,6 @@ function ToDO() {
     }
   };
 
-
   return (
     <div className="App max-w-2xl mx-auto p-6">
       <h1 className="text-center text-3xl text-green-500 mb-6">To-Do List</h1>
@@ -114,21 +113,28 @@ function ToDO() {
         <ul className="list-none p-0">
           {toDoList.map((todo, index) => (
             <li key={index} className="bg-white shadow-md rounded-lg p-4 mb-4 flex items-center justify-between">
-            <div className="flex flex-col w-full">
-              <p className="font-semibold text-lg text-gray-800"><strong>Task:</strong> {todo.task}</p>
-              <p className="text-gray-600"><strong>Description:</strong> {todo.description}</p>
-              <p className="text-gray-500"><strong>Priority:</strong> {todo.priority}</p>
-            </div>
+              <div className="flex flex-col w-full">
+                <p className="font-semibold text-lg text-gray-800 w-40"><strong>Task:</strong> {todo.task}</p>
+                <p 
+                  className={`
+                    ${todo.priority === 'high' ? 'text-red-500' : ''} 
+                    ${todo.priority === 'medium' ? 'text-yellow-500' : ''} 
+                    ${todo.priority === 'low' ? 'text-green-500' : ''}
+                  `}
+                >
+                  <strong>Priority:</strong> {todo.priority}
+                </p>
+                <p className="text-gray-600"><strong>Description:</strong> <br/>{todo.description}</p>
+              </div>
           
-            {/* Trash bin icon for delete */}
-            <button 
-              onClick={() => deleteToDo(index)}
-              className="bg-transparent border-none text-red-500 text-2xl cursor-pointer ml-40 mb-20"
-            >
-              <FaTrashAlt />
-            </button>
-          </li>
-          
+              {/* Trash bin icon for delete */}
+              <button 
+                onClick={() => deleteToDo(index)}
+                className="bg-transparent border-none text-red-500 text-2xl cursor-pointer w-10 mb-20"
+              >
+                <FaTrashAlt />
+              </button>
+            </li>
           ))}
         </ul>
       </div>

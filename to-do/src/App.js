@@ -13,7 +13,7 @@ function App() {
   return (
     <Router>
       <div className="App">
-        <h1>To-Do App</h1>
+
 
         <Routes>
           {/* Define the route for Add Task page */}
