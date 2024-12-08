@@ -72,7 +72,6 @@ function ToDoList() {
       }
     });
   };
-  
 
   const deleteTask = async (taskId) => {
     Swal.fire({
@@ -106,7 +105,6 @@ function ToDoList() {
       }
     });
   };
-  
 
   // Filter and sort tasks based on selected priority
   const filteredToDoList = toDoList.filter((task) => {
@@ -114,82 +112,82 @@ function ToDoList() {
     return task.priority === filterPriority; // Filter by priority
   });
 
-  // Swal.fire({
-  //   title: "Do you want to save the changes?",
-  //   showDenyButton: true,
-  //   showCancelButton: true,
-  //   confirmButtonText: "Save",
-  //   denyButtonText: `Don't save`
-  // }).then((result) => {
-  //   /* Read more about isConfirmed, isDenied below */
-  //   if (result.isConfirmed) {
-  //     saveTask(updateTask)
-  //     Swal.fire("Saved!", "", "success");
-  //   } else if (result.isDenied) {
-  //     Swal.fire("Changes are not saved", "", "info");
-  //   }
-  // });
-  
-
   return (
-    <div className="ToDoList max-w-2xl mx-auto p-6">
+    <div className="ToDoList p-6">
       <h1 className="text-center text-3xl text-green-500 mb-6">To-Do List</h1>
-
+      <div className='flex gap-20'>
       {/* Priority Filter Dropdown */}
-      <center>
-      <div className="mb-4">
-        <label htmlFor="priorityFilter" className="text-gray-700 mr-2">Filter by Priority:</label>
-        <select
-          id="priorityFilter"
-          value={filterPriority}
-          onChange={(e) => setFilterPriority(e.target.value)}
-          className="p-2 border border-gray-300 rounded-md"
-        >
-          <option value="all">All</option>
-          <option value="high">High</option>
-          <option value="medium">Medium</option>
-          <option value="low">Low</option>
-        </select>
+      <div className='flex gap-[660px]'> {/* Increased gap by 800% */}
+  {/* Priority Filter Dropdown */}
+  <div className="mb-4">
+    <label htmlFor="priorityFilter" className="text-gray-700 mr-2">Filter by Priority:</label>
+    <select
+      id="priorityFilter"
+      value={filterPriority}
+      onChange={(e) => setFilterPriority(e.target.value)}
+      className="p-2 border border-gray-300 rounded-md"
+    >
+      <option value="all">All</option>
+      <option value="high">High</option>
+      <option value="medium">Medium</option>
+      <option value="low">Low</option>
+    </select>
+  </div>
+
+  {/* Add Task Button */}
+  <div className="text-center mb-6">
+    <button
+      onClick={() => navigate('/add-task')} // Navigate to Add Task page
+      className="bg-green-500 text-white p-3 rounded-full shadow-lg hover:bg-green-600 transition duration-300"
+    >
+      <FaPlus className="inline mr-2" /> Add Task
+    </button>
+  </div>
+</div>
+
+
+
       </div>
-      </center>
-      <img src={Img1} alt="My Image" />
 
-      {/* Add Task Button */}
-      <div className="text-center mb-6">
-        <button
-          onClick={() => navigate('/add-task')} // Navigate to Add Task page
-          className="bg-green-500 text-white p-3 rounded-full shadow-lg hover:bg-green-600 transition duration-300"
-        >
-          <FaPlus className="inline mr-2" /> Add Task
-        </button>
+      {/* Flex container for Image and Task List */}
+      <div className="flex justify-between items-start mb-6">
+        <div className="flex-grow">
+          
+          
+
+          <ul className="list-none p-0">
+            {filteredToDoList.map((task) => (
+              <li
+                key={task.id}
+                onClick={() => {
+                  setSelectedTask(task);
+                  setEditValues(task); // Load task details for editing
+                }}
+                className="bg-white shadow-md rounded-lg p-4 mb-4 flex items-center justify-between cursor-pointer"
+              >
+                {/* Task Name */}
+                <p className="text-lg font-semibold text-gray-800">{task.task}</p>
+
+                {/* Priority Circle */}
+                <div
+                  className={`h-8 w-8 flex items-center justify-center rounded-full text-white font-bold ${
+                    task.priority === 'high' ? 'bg-red-500' :
+                    task.priority === 'medium' ? 'bg-yellow-500' :
+                    'bg-green-500'
+                  }`}
+                >
+                  {task.priority[0].toUpperCase()} {/* Display first letter of priority */}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Image Section */}
+        <div className="w-1/3">
+          <img src={Img1} alt="My Image" className="w-full h-auto rounded-lg" />
+        </div>
       </div>
-
-      <ul className="list-none p-0">
-        {filteredToDoList.map((task) => (
-          <li
-            key={task.id}
-            onClick={() => {
-              setSelectedTask(task);
-              setEditValues(task); // Load task details for editing
-            }}
-            className="bg-white shadow-md rounded-lg p-4 mb-4 flex items-center justify-between cursor-pointer"
-          >
-            {/* Task Name */}
-            <p className="text-lg font-semibold text-gray-800">{task.task}</p>
-
-            {/* Priority Circle */}
-            <div
-              className={`h-8 w-8 flex items-center justify-center rounded-full text-white font-bold ${
-                task.priority === 'high' ? 'bg-red-500' :
-                task.priority === 'medium' ? 'bg-yellow-500' :
-                'bg-green-500'
-              }`}
-            >
-              {task.priority[0].toUpperCase()} {/* Display first letter of priority */}
-            </div>
-          </li>
-        ))}
-      </ul>
 
       {/* Task Details Modal */}
       {selectedTask && (

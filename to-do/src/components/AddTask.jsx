@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db, collection, addDoc, getDocs, deleteDoc, doc } from '../firebase'; // Import Firestore functions
 import { FaTrashAlt } from 'react-icons/fa'; // Import Trash Bin Icon
+import Swal from 'sweetalert2'; // Import SweetAlert for better validation and user feedback
 
 function ToDO() {
   const [task, setTask] = useState('');
@@ -11,63 +12,82 @@ function ToDO() {
   // Load the to-do list from Firestore when the app loads
   useEffect(() => {
     const fetchToDoList = async () => {
-      const querySnapshot = await getDocs(collection(db, 'todos'));
-      const todos = querySnapshot.docs.map(doc => doc.data());
-      setToDoList(todos);
+      try {
+        const querySnapshot = await getDocs(collection(db, 'todos'));
+        const todos = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        setToDoList(todos);
+      } catch (error) {
+        console.error('Error fetching tasks:', error);
+      }
     };
     fetchToDoList();
   }, []);
 
   // Add a new to-do to Firestore
   const addToDo = async () => {
-    if (task.trim() && description.trim()) {
-      try {
-        // Add task, description, and priority to Firestore
-        await addDoc(collection(db, 'todos'), {
-          task: task,
-          description: description,
-          priority: priority
-        });
-        setToDoList([...toDoList, { task, description, priority }]);
-        setTask('');
-        setDescription('');
-        setPriority('low');
-      } catch (error) {
-        console.error("Error adding document: ", error);
-      }
+    if (!task.trim()) {
+      Swal.fire('Empty Field Detected  ', 'Task name cannot be empty.', 'warning');
+      return;
+    }
+    if (!description.trim()) {
+      Swal.fire('Empty Field Detected', 'Task description cannot be empty.', 'warning');
+      return;
+    }
+
+    try {
+      // Add task, description, and priority to Firestore
+      const docRef = await addDoc(collection(db, 'todos'), {
+        task: task.trim(),
+        description: description.trim(),
+        priority: priority
+      });
+      setToDoList([...toDoList, { id: docRef.id, task, description, priority }]);
+      setTask('');
+      setDescription('');
+      setPriority('low');
+      Swal.fire('Success', 'Task added successfully!', 'success');
+    } catch (error) {
+      console.error('Error adding document:', error);
+      Swal.fire('Error', 'Failed to add task. Please try again.', 'error');
     }
   };
 
   // Delete a to-do from Firestore
   const deleteToDo = async (index) => {
     const todoToDelete = toDoList[index];
-    try {
-      // Fetch the todos from Firestore
-      const querySnapshot = await getDocs(collection(db, 'todos'));
-      
-      // Find the document ID of the task to delete
-      querySnapshot.forEach(async (docSnapshot) => {
-        if (docSnapshot.data().task === todoToDelete.task && docSnapshot.data().description === todoToDelete.description) {
-          // Get the document reference using docSnapshot.id
-          const docRef = doc(db, 'todos', docSnapshot.id);
-          
+
+    Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
           // Delete the document using deleteDoc
+          const docRef = doc(db, 'todos', todoToDelete.id);
           await deleteDoc(docRef);
-          
+
           // Update the local state after deleting
           const updatedList = toDoList.filter((_, i) => i !== index);
           setToDoList(updatedList);
+
+          Swal.fire('Deleted!', 'Your task has been deleted.', 'success');
+        } catch (error) {
+          console.error('Error deleting document:', error);
+          Swal.fire('Error', 'Failed to delete task. Please try again.', 'error');
         }
-      });
-    } catch (error) {
-      console.error('Error deleting document: ', error);
-    }
+      }
+    });
   };
 
   return (
     <div className="App max-w-2xl mx-auto p-6">
       <h1 className="text-center text-3xl text-green-500 mb-6">To-Do List</h1>
-      
+
       {/* Task Input Section */}
       <div className="AddTask mb-6">
         {/* Input for task name */}
@@ -78,7 +98,7 @@ function ToDO() {
           placeholder="Add a new task"
           className="w-full p-3 mb-3 border border-gray-300 rounded-md"
         />
-        
+
         {/* Dropdown for task priority */}
         <select
           value={priority}
@@ -89,7 +109,7 @@ function ToDO() {
           <option value="medium">Medium</option>
           <option value="high">High</option>
         </select>
-        
+
         {/* Textarea for task description */}
         <textarea
           value={description}
@@ -112,10 +132,15 @@ function ToDO() {
         {/* Render list of to-dos */}
         <ul className="list-none p-0">
           {toDoList.map((todo, index) => (
-            <li key={index} className="bg-white shadow-md rounded-lg p-4 mb-4 flex items-center justify-between">
+            <li
+              key={todo.id}
+              className="bg-white shadow-md rounded-lg p-4 mb-4 flex items-center justify-between"
+            >
               <div className="flex flex-col w-full">
-                <p className="font-semibold text-lg text-gray-800 w-40"><strong>Task:</strong> {todo.task}</p>
-                <p 
+                <p className="font-semibold text-lg text-gray-800 w-40">
+                  <strong>Task:</strong> {todo.task}
+                </p>
+                <p
                   className={`
                     ${todo.priority === 'high' ? 'text-red-500' : ''} 
                     ${todo.priority === 'medium' ? 'text-yellow-500' : ''} 
@@ -124,11 +149,14 @@ function ToDO() {
                 >
                   <strong>Priority:</strong> {todo.priority}
                 </p>
-                <p className="text-gray-600"><strong>Description:</strong> <br/>{todo.description}</p>
+                <p className="text-gray-600">
+                  <strong>Description:</strong> <br />
+                  {todo.description}
+                </p>
               </div>
-          
+
               {/* Trash bin icon for delete */}
-              <button 
+              <button
                 onClick={() => deleteToDo(index)}
                 className="bg-transparent border-none text-red-500 text-2xl cursor-pointer w-10 mb-20"
               >
